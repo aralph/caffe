@@ -306,7 +306,7 @@ message ParamSpec {
 // NOTE
 // Update the next available ID when you add a new LayerParameter field.
 //
-// LayerParameter next available layer-specific ID: 146 (last added: parameter_param)
+// LayerParameter next available layer-specific ID: 147 (last added: upsample_param)
 message LayerParameter {
   optional string name = 1; // the layer name
   optional string type = 2; // the layer type
@@ -362,6 +362,7 @@ message LayerParameter {
   optional ArgMaxParameter argmax_param = 103;
   optional BatchNormParameter batch_norm_param = 139;
   optional BiasParameter bias_param = 141;
+  optional BNParameter bn_param = 45;
   optional ConcatParameter concat_param = 104;
   optional ContrastiveLossParameter contrastive_loss_param = 105;
   optional ConvolutionParameter convolution_param = 106;
@@ -401,6 +402,7 @@ message LayerParameter {
   optional TanHParameter tanh_param = 127;
   optional ThresholdParameter threshold_param = 128;
   optional TileParameter tile_param = 138;
+  optional UpsampleParameter upsample_param = 146;
   optional WindowDataParameter window_data_param = 129;
 }
 
@@ -540,6 +542,17 @@ message BiasParameter {
   optional FillerParameter filler = 3;
 }
 
+// Message that stores parameters used by BN (Batch Normalization)  layer
+message BNParameter {
+  enum BNMode {
+    LEARN = 0;
+    INFERENCE = 1;
+  }
+  optional BNMode bn_mode = 3 [default = LEARN];
+  optional FillerParameter scale_filler = 1;  // The filler for the scale
+  optional FillerParameter shift_filler = 2;  // The filler for the shift
+}
+
 message ContrastiveLossParameter {
   // margin for dissimilar pair
   optional float margin = 1 [default = 1.0];
@@ -659,6 +672,7 @@ message DataParameter {
 
 message DropoutParameter {
   optional float dropout_ratio = 1 [default = 0.5]; // dropout ratio
+  optional bool sample_weights_test = 2 [default = false]; // Sample weights for testing or use the mean
 }
 
 // DummyDataLayer fills any number of arbitrarily shaped blobs with random
@@ -1130,6 +1144,27 @@ message TileParameter {
 // Message that stores parameters used by ThresholdLayer
 message ThresholdParameter {
   optional float threshold = 1 [default = 0]; // Strictly positive values
+}
+
+// Message that stores parameters used by UpsampleLayer
+message UpsampleParameter {
+  // DEPRECATED. No need to specify upsampling scale factors when
+  // exact output shape is given by upsample_h, upsample_w parameters.
+  optional uint32 scale = 1 [default = 2];
+  // DEPRECATED. No need to specify upsampling scale factors when
+  // exact output shape is given by upsample_h, upsample_w parameters.
+  optional uint32 scale_h = 2;
+  // DEPRECATED. No need to specify upsampling scale factors when
+  // exact output shape is given by upsample_h, upsample_w parameters.
+  optional uint32 scale_w = 3;
+  // DEPRECATED. Specify exact output height using upsample_h. This
+  // parameter only works when scale is 2
+  optional bool pad_out_h = 4 [default = false];
+  // DEPRECATED. Specify exact output width using upsample_w. This
+  // parameter only works when scale is 2
+  optional bool pad_out_w = 5 [default = false];
+  optional uint32 upsample_h = 6;
+  optional uint32 upsample_w = 7;
 }
 
 message WindowDataParameter {

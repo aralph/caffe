@@ -17,6 +17,9 @@ void AccuracyLayer<Dtype>::LayerSetUp(
   if (has_ignore_label_) {
     ignore_label_ = this->layer_param_.accuracy_param().ignore_label();
   }
+  if (this->layer_param_.top_size() == 2) {
+    LOG(INFO) << "Per-class accuracies currently only work on TRAIN phase only.";
+  }
 }
 
 template <typename Dtype>
@@ -54,6 +57,8 @@ void AccuracyLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
   const int num_labels = bottom[0]->shape(label_axis_);
   vector<Dtype> maxval(top_k_+1);
   vector<int> max_id(top_k_+1);
+  vector<Dtype> accuracies(num_labels, 0);
+  vector<Dtype> nums(num_labels, 0);
   if (top.size() > 1) {
     caffe_set(nums_buffer_.count(), Dtype(0), nums_buffer_.mutable_cpu_data());
     caffe_set(top[1]->count(), Dtype(0), top[1]->mutable_cpu_data());
@@ -70,6 +75,7 @@ void AccuracyLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       DCHECK_GE(label_value, 0);
       DCHECK_LT(label_value, num_labels);
       // Top-k accuracy
+      ++nums[label_value];
       std::vector<std::pair<Dtype, int> > bottom_data_vector;
       for (int k = 0; k < num_labels; ++k) {
         bottom_data_vector.push_back(std::make_pair(
@@ -82,6 +88,7 @@ void AccuracyLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       for (int k = 0; k < top_k_; k++) {
         if (bottom_data_vector[k].second == label_value) {
           ++accuracy;
+		  ++accuracies[label_value];
           if (top.size() > 1) ++top[1]->mutable_cpu_data()[label_value];
           break;
         }
